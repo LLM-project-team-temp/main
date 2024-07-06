@@ -6,7 +6,7 @@ from langchain_upstage import ChatUpstage, UpstageLayoutAnalysisLoader
 from utils import load_context, rag
 
 
-def chatmodel(add_to_system=None, add_history=None):
+def chatmodel(add_to_system=None, add_history=None, retriever=None):
     # langchain, 1. llm define, 2. prompt define, 3. chain, 4. chain.invoke
 
     # 1. define your favorate llm, solar
@@ -36,12 +36,14 @@ def chatmodel(add_to_system=None, add_history=None):
     )
 
     history = []
-    for human, ai in add_history:
-        history.append(HumanMessage(content=human))
-        history.append(AIMessage(content=ai))
+    if add_history:
+        for human, ai in add_history:
+            history.append(HumanMessage(content=human))
+            history.append(AIMessage(content=ai))
 
-    context = load_context()
-    retriever = rag(context)
+    if retriever is None:
+        context = load_context()
+        retriever = rag(context)
 
     # 3. define chain
     chain = prompt | llm | StrOutputParser()
@@ -50,13 +52,14 @@ def chatmodel(add_to_system=None, add_history=None):
         latest_query = input()
         if latest_query=='':
             break
+        print('YOU:', latest_query)
 
         # 4. invoke the chain
         result_docs = retriever.invoke(latest_query)
         response = chain.invoke({"history": history,
                                 "context": result_docs,
                                 "input": latest_query})
-        print(response, flush=True)
+        print('AI:', response, flush=True)
 
         history.append(HumanMessage(latest_query))
         history.append(AIMessage(response))
