@@ -5,7 +5,7 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_upstage import ChatUpstage, UpstageLayoutAnalysisLoader
 
-from utils import chat, load_context, rag
+from utils import load_context, rag
 
 warnings.filterwarnings("ignore")
 
@@ -40,6 +40,7 @@ history = [
 ]
 latest_query = "What about ENFP?"
 context = load_context()
+retriever = rag(context)
 
 # 3. define chain
 chain = prompt | llm | StrOutputParser()
@@ -50,12 +51,11 @@ while (True):
         break
 
     # 4. invoke the chain
-    response = chain.invoke({"history": history, "context": context, "input": latest_query})
+    result_docs = retriever.invoke(latest_query)
+    response = chain.invoke({"history": history,
+                             "context": result_docs,
+                             "input": latest_query})
     print(response, flush=True)
 
     history.append(HumanMessage(latest_query))
     history.append(AIMessage(response))
-
-
-###########################################
-
