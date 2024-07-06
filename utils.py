@@ -1,6 +1,19 @@
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
+from langchain_community.vectorstores.oraclevs import OracleVS
+from langchain_community.vectorstores.utils import DistanceStrategy
 from langchain_upstage import UpstageEmbeddings, UpstageLayoutAnalysisLoader
+
+
+def use_oracle_db(client):
+    upstage_embeddings = UpstageEmbeddings(model="solar-embedding-1-large")
+    vector_store = OracleVS(client=client, 
+                            embedding_function=upstage_embeddings, 
+                            table_name="text_embeddings2", 
+                            distance_strategy=DistanceStrategy.DOT_PRODUCT)
+
+    retriever = vector_store.as_retriever()
+    return retriever
 
 
 def load_context():
